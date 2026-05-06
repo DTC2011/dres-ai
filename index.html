@@ -34,7 +34,6 @@ input,select{padding:10px;border-radius:8px;border:none;margin:5px}
 <button onclick="show('chat')">💬 IA</button>
 </nav>
 
-<!-- TAREAS -->
 <div id="tasks" class="container">
 <input id="taskInput" placeholder="Nueva tarea">
 <input id="descInput" placeholder="Descripción">
@@ -57,21 +56,13 @@ input,select{padding:10px;border-radius:8px;border:none;margin:5px}
 <div id="taskList"></div>
 </div>
 
-<!-- PIZARRÓN -->
 <div id="board" class="container hidden">
-<h2>Pizarrón</h2>
-
 <button onclick="render()">Todas</button>
-<button onclick="filter('Matemáticas')">Matemáticas</button>
+<button onclick="filter('Matemáticas')">Mate</button>
 <button onclick="filter('Física')">Física</button>
-<button onclick="filter('Química')">Química</button>
-<button onclick="filter('Informática')">Informática</button>
-<button onclick="filter('Historia')">Historia</button>
-
 <div id="boardList"></div>
 </div>
 
-<!-- CHAT -->
 <div id="chat" class="container hidden">
 <input id="chatInput">
 <button onclick="send()">Enviar</button>
@@ -81,132 +72,107 @@ input,select{padding:10px;border-radius:8px;border:none;margin:5px}
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-function save(){
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-}
+function save(){localStorage.setItem("tasks",JSON.stringify(tasks))}
 
 function show(id){
-    ["tasks","board","chat"].forEach(s=>{
-        document.getElementById(s).classList.add("hidden");
-    });
-    document.getElementById(id).classList.remove("hidden");
+["tasks","board","chat"].forEach(s=>document.getElementById(s).classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
 }
 
-/* 🔥 FIX BOTÓN AGREGAR */
 function addTask(){
-    let text = document.getElementById("taskInput").value;
-    let desc = document.getElementById("descInput").value;
-    let subject = document.getElementById("subject").value;
-    let priority = document.getElementById("priority").value;
+let text=taskInput.value;
+let desc=descInput.value;
+let subject=subject.value;
+let priority=priority.value;
 
-    if(!text.trim()){
-        alert("Escribe una tarea primero");
-        return;
-    }
+if(!text)return;
 
-    tasks.push({text, desc, subject, priority, done:false});
-
-    document.getElementById("taskInput").value="";
-    document.getElementById("descInput").value="";
-
-    save();
-    render();
+tasks.push({text,desc,subject,priority,done:false});
+taskInput.value="";descInput.value="";
+save();render();
 }
 
-/* 🔥 RENDER SIN BUGS */
 function render(filter=null){
-    let list = document.getElementById("taskList");
-    let board = document.getElementById("boardList");
+taskList.innerHTML="";
+boardList.innerHTML="";
 
-    list.innerHTML="";
-    board.innerHTML="";
+tasks.forEach((t,i)=>{
 
-    tasks.forEach((t,i)=>{
+if(filter && t.subject!==filter) return;
 
-        if(filter && t.subject !== filter) return;
+function card(){
+let c=document.createElement("div");
+c.className="card "+t.priority+(t.done?" done":"");
 
-        function createCard(){
-            let c = document.createElement("div");
-            c.className = "card " + t.priority + (t.done ? " done":"");
+c.innerHTML=`<b>${t.text}</b><br><small>${t.desc||""}</small><br>${t.subject}<br>`;
 
-            c.innerHTML = `
-                <b>${t.text}</b><br>
-                <small>${t.desc || ""}</small><br>
-                📘 ${t.subject}<br>
-            `;
+let b1=document.createElement("button");
+b1.textContent="🧠 IA";
+b1.onclick=()=>aiTask(i);
 
-            let b1 = document.createElement("button");
-            b1.textContent="🧠 IA";
-            b1.onclick=()=>aiTask(i);
+let b2=document.createElement("button");
+b2.textContent="✅";
+b2.onclick=()=>toggle(i);
 
-            let b2 = document.createElement("button");
-            b2.textContent="✅";
-            b2.onclick=()=>toggle(i);
+c.appendChild(b1);
+c.appendChild(b2);
 
-            c.appendChild(b1);
-            c.appendChild(b2);
-
-            return c;
-        }
-
-        list.appendChild(createCard());
-        board.appendChild(createCard());
-    });
+return c;
 }
 
-function filter(sub){
-    render(sub);
+taskList.appendChild(card());
+boardList.appendChild(card());
+
+});
 }
+
+function filter(sub){render(sub)}
 
 function toggle(i){
-    tasks[i].done = !tasks[i].done;
-    save();
-    render();
+tasks[i].done=!tasks[i].done;
+save();render();
 }
 
-/* IA */
 async function aiTask(i){
-    let t = tasks[i];
+let t=tasks[i];
 
-    let res = await fetch("/api/ai", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-            prompt:`Explica paso a paso: ${t.text} ${t.desc}`
-        })
-    });
+let res=await fetch("/api/ai",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({prompt:`Explica paso a paso: ${t.text} ${t.desc}`})
+});
 
-    let data = await res.json();
-   if (data.reply) {
+let data=await res.json();
+
+if (data.reply) {
   alert(data.reply);
 } else {
   alert("Error: " + JSON.stringify(data));
 }
 }
 
-/* CHAT */
 async function send(){
-    let input = document.getElementById("chatInput");
-    let msg = input.value;
+let msg=chatInput.value;
+if(!msg)return;
 
-    if(!msg) return;
+chatBox.innerHTML+=`<div class="chat user">🧑 ${msg}</div>`;
 
-    let box = document.getElementById("chatBox");
+let res=await fetch("/api/ai",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({prompt:msg})
+});
 
-    box.innerHTML += `<div class="chat user"> ${msg}</div>`;
+let data=await res.json();
 
-    let res = await fetch("/api/ai", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({prompt:msg})
-    });
+if (data.reply) {
+  chatBox.innerHTML+=`<div class="chat">🤖 ${data.reply}</div>`;
+} else {
+  chatBox.innerHTML+=`<div class="chat">❌ Error: ${JSON.stringify(data)}</div>`;
+}
 
-    let data = await res.json();
-
-    box.innerHTML += `<div class="chat">🤖 ${data.reply}</div>`;
-
-    input.value="";
-    box.scrollTop = box.scrollHeight;
+chatInput.value="";
+chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 render();
