@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -22,11 +22,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           contents: [
             {
-              parts: [
-                {
-                  text: `Eres un asistente que ayuda a estudiantes. Explica claro y paso a paso:\n\n${prompt}`
-                }
-              ]
+              parts: [{ text: prompt }]
             }
           ]
         })
@@ -35,7 +31,6 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // 🔥 Mostrar error real si algo falla
     if (!response.ok) {
       return res.status(500).json({ error: data });
     }
