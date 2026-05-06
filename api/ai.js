@@ -29,12 +29,21 @@ export default async function handler(req, res) {
       }
     );
 
-    const data = await response.json();
+ const data = await response.json();
 
-    const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text || "Sin respuesta";
+if (!response.ok) {
+  return res.status(500).json({ error: data });
+}
 
-    res.status(200).json({ reply });
+console.log("Gemini response:", JSON.stringify(data, null, 2));
+
+const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+if (!reply) {
+  return res.status(500).json({ error: data });
+}
+
+res.status(200).json({ reply });
 
   } catch (error) {
     res.status(500).json({ error: error.message });
