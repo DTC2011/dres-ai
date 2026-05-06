@@ -189,7 +189,7 @@ async function send(){
 
     let box = document.getElementById("chatBox");
 
-    box.innerHTML += `<div class="chat user">🧑 ${msg}</div>`;
+    box.innerHTML += `<div class="chat user"> ${msg}</div>`;
 
     let res = await fetch("/api/ai", {
         method:"POST",
