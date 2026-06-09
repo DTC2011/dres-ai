@@ -5,121 +5,129 @@
 <title>DRES AI</title>
 
 <style>
+
+/* ===== RESET ===== */
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
+
+/* ===== THEMES ===== */
+:root{
+--bg:#0f172a;
+--panel:#111827;
+--text:#ffffff;
+--user:#2563eb;
+--ai:#1f2937;
+--border:rgba(255,255,255,0.08);
+}
+
+body.light{
+--bg:#f5f5f5;
+--panel:#ffffff;
+--text:#111;
+--user:#2563eb;
+--ai:#e5e7eb;
+--border:rgba(0,0,0,0.1);
+}
+
+/* ===== LAYOUT ===== */
 body{
-margin:0;
-font-family:Segoe UI;
-background:#0b1220;
-color:white;
-}
-
-header{
-padding:18px;
-text-align:center;
-font-weight:bold;
-background:linear-gradient(90deg,#6366f1,#22c55e);
-}
-
-nav{
+background:var(--bg);
+color:var(--text);
+height:100vh;
 display:flex;
-justify-content:center;
+flex-direction:column;
+}
+
+/* TOP BAR */
+header{
+padding:14px;
+text-align:center;
+font-weight:600;
+border-bottom:1px solid var(--border);
+}
+
+/* CHAT AREA */
+#chatBox{
+flex:1;
+overflow-y:auto;
+padding:20px;
+display:flex;
+flex-direction:column;
 gap:10px;
-padding:10px;
-flex-wrap:wrap;
+}
+
+/* MESSAGES */
+.msg{
+max-width:75%;
+padding:12px 14px;
+border-radius:14px;
+line-height:1.4;
+font-size:14px;
+}
+
+.user{
+background:var(--user);
+color:white;
+align-self:flex-end;
+}
+
+.ai{
+background:var(--panel);
+border:1px solid var(--border);
+align-self:flex-start;
+}
+
+/* INPUT BAR */
+#inputArea{
+display:flex;
+padding:12px;
+border-top:1px solid var(--border);
+gap:10px;
+}
+
+input{
+flex:1;
+padding:12px;
+border-radius:10px;
+border:1px solid var(--border);
+background:var(--panel);
+color:var(--text);
+outline:none;
 }
 
 button{
 padding:10px 14px;
 border:none;
-border-radius:12px;
+border-radius:10px;
+background:#2563eb;
+color:white;
 cursor:pointer;
-background:#1f2937;
-color:white;
 }
 
-button:hover{
-background:#6366f1;
+button:hover{opacity:.9}
+
+/* THINKING */
+#thinking{
+opacity:.6;
+font-style:italic;
 }
 
-.container{padding:20px;}
-.hidden{display:none;}
-
-.card{
-background:rgba(255,255,255,0.06);
-padding:15px;
-border-radius:12px;
-margin:10px 0;
-}
-
-.chatBox{
-height:400px;
-overflow-y:auto;
-background:rgba(255,255,255,0.05);
-padding:10px;
-border-radius:12px;
-}
-
-.msg{
-padding:10px;
-margin:8px 0;
-border-radius:10px;
-max-width:80%;
-}
-
-.user{
-background:#6366f1;
-margin-left:auto;
-text-align:right;
-}
-
-.ai{
-background:#1f2937;
-}
-
-input{
-padding:10px;
-border-radius:10px;
-border:none;
-margin:5px;
-background:#111827;
-color:white;
-width:70%;
-}
 </style>
 </head>
 
 <body>
 
-<header>DRES AI</header>
+<header>🤖 DRES AI — OpenAI Clone</header>
 
-<nav>
-<button onclick="show('tasks')">📚 Tareas</button>
-<button onclick="show('chat')">💬 IA</button>
-</nav>
+<div id="chatBox"></div>
 
-<!-- TASKS -->
-<div id="tasks" class="container">
-<input id="taskInput" placeholder="Nueva tarea">
-<input id="descInput" placeholder="Descripción">
-<button onclick="addTask()">Agregar</button>
-<div id="taskList"></div>
-</div>
-
-<!-- CHAT -->
-<div id="chat" class="container hidden">
-
-<div id="chatBox" class="chatBox"></div>
-
-<input id="chatInput" placeholder="Escribe...">
+<div id="inputArea">
+<input id="chatInput" placeholder="Escribe un mensaje...">
 <button onclick="send()">Enviar</button>
-
+<button onclick="toggleTheme()">🌓</button>
 </div>
 
 <script>
 
-console.log("DRES AI ONLINE");
-
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let mode = "profesor";
 let isLoading = false;
 
 /* ENTER */
@@ -127,120 +135,35 @@ chatInput.addEventListener("keydown",(e)=>{
 if(e.key==="Enter") send();
 });
 
-/* NAV */
-function show(id){
-["tasks","chat"].forEach(s=>{
-document.getElementById(s).classList.add("hidden");
-});
-document.getElementById(id).classList.remove("hidden");
-}
-
-/* TASKS */
-function save(){
-localStorage.setItem("tasks",JSON.stringify(tasks));
-}
-
-function addTask(){
-let text = taskInput.value;
-let desc = descInput.value;
-
-if(!text) return;
-
-tasks.push({text,desc});
-
-taskInput.value="";
-descInput.value="";
-
-save();
-render();
-}
-
-function render(){
-taskList.innerHTML="";
-
-tasks.forEach((t,i)=>{
-
-let c = document.createElement("div");
-c.className="card";
-
-c.innerHTML = `<b>${t.text}</b><br><small>${t.desc||""}</small>`;
-
-let b = document.createElement("button");
-b.textContent="🧠 IA";
-b.onclick=()=>askAI(t);
-
-c.appendChild(b);
-taskList.appendChild(c);
-
-});
+/* THEME */
+function toggleTheme(){
+document.body.classList.toggle("light");
 }
 
 /* COMMANDS */
+let mode = "profesor";
+
 function handleCommand(text){
 
-let t = text.toLowerCase().trim();
+text = text.toLowerCase().trim();
 
-if(t==="modo examen"){
-mode="examen";
-addSystem("📝 Modo EXAMEN");
-return true;
-}
-
-if(t==="modo profesor"){
-mode="profesor";
-addSystem("👨‍🏫 Modo PROFESOR");
-return true;
-}
-
-if(t==="modo corto"){
-mode="corto";
-addSystem("⚡ Modo CORTO");
-return true;
-}
-
-if(t==="limpiar"){
-chatBox.innerHTML="";
-addSystem("🧹 Chat limpio");
-return true;
-}
+if(text==="modo examen"){mode="examen"; addSys("📝 examen"); return true;}
+if(text==="modo profesor"){mode="profesor"; addSys("👨‍🏫 profe"); return true;}
+if(text==="modo corto"){mode="corto"; addSys("⚡ corto"); return true;}
+if(text==="limpiar"){chatBox.innerHTML=""; return true;}
 
 return false;
 }
 
-function addSystem(text){
-chatBox.innerHTML += `<div class="msg ai" style="opacity:.6;text-align:center;">${text}</div>`;
+function addSys(t){
+chatBox.innerHTML += `<div class="msg ai" style="opacity:.5;text-align:center">${t}</div>`;
 }
 
-/* AI TASK */
-async function askAI(task){
-
-if(isLoading) return;
-isLoading = true;
-
-let prompt = `[modo:${mode}] ${task.text} ${task.desc}`;
-
-chatBox.innerHTML += `<div class="msg ai" id="thinking">🤖 Pensando...</div>`;
-
-let res = await fetch("/api/ai",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({prompt})
-});
-
-let data = await res.json();
-
-document.getElementById("thinking")?.remove();
-
-chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
-
-isLoading = false;
-}
-
-/* CHAT */
+/* SEND */
 async function send(){
 
 let msg = chatInput.value;
-if(!msg) return;
+if(!msg || isLoading) return;
 
 /* COMMANDS */
 if(handleCommand(msg)){
@@ -248,14 +171,12 @@ chatInput.value="";
 return;
 }
 
-if(isLoading) return;
-
 isLoading = true;
 
 chatBox.innerHTML += `<div class="msg user">${msg}</div>`;
 chatInput.value="";
 
-chatBox.innerHTML += `<div class="msg ai" id="thinking">🤖 Pensando...</div>`;
+chatBox.innerHTML += `<div class="msg ai" id="thinking">Pensando...</div>`;
 
 try{
 
@@ -276,13 +197,11 @@ chatBox.scrollTop = chatBox.scrollHeight;
 }catch(e){
 
 document.getElementById("thinking")?.remove();
-chatBox.innerHTML += `<div class="msg ai">❌ Error</div>`;
+chatBox.innerHTML += `<div class="msg ai">Error</div>`;
 }
 
 isLoading = false;
 }
-
-render();
 
 </script>
 
