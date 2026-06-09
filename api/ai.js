@@ -1,9 +1,13 @@
 export default async function handler(req, res) {
+
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
   }
 
   try {
+
     const { prompt } = req.body;
 
     const response = await fetch(
@@ -14,43 +18,61 @@ export default async function handler(req, res) {
           "Authorization": `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
           "Content-Type": "application/json",
         },
-body: JSON.stringify({
+        body: JSON.stringify({
 
-    prompt: `
-Eres DRES AI.
+          prompt: `
+Eres DRES AI, un tutor de matemáticas y ciencias.
 
 REGLAS:
-- Nunca cortes una respuesta.
-- Siempre termina todas las listas.
-- Si una explicación es larga, continúa hasta finalizarla.
+- Nunca cortes una respuesta a la mitad.
+- Siempre termina listas y explicaciones.
+- Usa títulos, listas y párrafos cuando sea útil.
 - Finaliza con una sección llamada "Resultado final".
-- Usa listas y párrafos estructurados.
+- No repitas tu presentación.
 - Solo te presentas la primera vez.
-- Respondes claro, estructurado y breve.
-- No repitas introducciones.
+- Sé claro, estructurado y breve.
+- Si una respuesta necesita más detalle, complétala antes de terminar.
 
-
+Pregunta del usuario:
 ${prompt}
+`
 
-`,
-
-    max_tokens: 1500
-
-})
-
-Respuesta:
-          `
         }),
       }
     );
 
     const data = await response.json();
 
-    res.status(200).json({
-      reply: data?.result?.response || data?.result || "Sin respuesta"
+    console.log("CLOUDFLARE:", JSON.stringify(data, null, 2));
+
+    if (!response.ok) {
+      return res.status(500).json({
+        error:
+          data?.errors?.[0]?.message ||
+          "Error de Cloudflare",
+      });
+    }
+
+    const reply =
+      data?.result?.response ||
+      data?.result?.text ||
+      (typeof data?.result === "string"
+        ? data.result
+        : null) ||
+      "Sin respuesta";
+
+    return res.status(200).json({
+      reply
     });
 
   } catch (e) {
-    res.status(500).json({ error: e.message });
+
+    console.error(e);
+
+    return res.status(500).json({
+      error: e.message
+    });
+
   }
+
 }
