@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
 
-          prompt: `
+  prompt: `
 Eres DRES AI, un tutor de matemáticas y ciencias.
 
 REGLAS:
@@ -35,9 +35,11 @@ REGLAS:
 
 Pregunta del usuario:
 ${prompt}
-`
+`,
 
-        }),
+  max_tokens: 1024
+
+}),
       }
     );
 
