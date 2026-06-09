@@ -60,7 +60,7 @@ ${prompt}
         ? data.result
         : null) ||
       "Sin respuesta";
-
+console.log("RESULT:", JSON.stringify(data.result, null, 2));
     return res.status(200).json({
       reply
     });
