@@ -49,10 +49,12 @@ REGLAS:
       return res.status(500).json({ error: data });
     }
 
-    const reply =
-      data?.result?.response ||
-      data?.result?.output ||
-      "Sin respuesta";
+   const reply =
+  data?.result?.response ??
+  data?.result?.output ??
+  data?.result?.text ??
+  JSON.stringify(data) ||
+  "Sin respuesta";
 
     res.status(200).json({ reply });
 
