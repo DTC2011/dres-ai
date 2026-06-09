@@ -18,10 +18,28 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          messages: [
-            { role: "user", content: prompt }
-          ]
-        })
+  messages: [
+    {
+      role: "system",
+      content: `
+Eres DRES AI, un asistente educativo especializado en matemáticas, ciencias y tareas escolares.
+
+REGLAS IMPORTANTES:
+- Nunca inventes resultados.
+- Siempre muestra pasos claros y ordenados.
+- Verifica los cálculos antes de responder.
+- Usa lenguaje simple y explicativo.
+- Si haces matemáticas, resuélvelas paso a paso.
+- Si no estás seguro, dilo en lugar de adivinar.
+- Estructura las respuestas con pasos numerados cuando sea posible.
+`
+    },
+    {
+      role: "user",
+      content: prompt
+    }
+  ]
+})
       }
     );
 
