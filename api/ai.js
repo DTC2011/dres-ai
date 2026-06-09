@@ -58,7 +58,10 @@ REGLAS:
 
     res.status(200).json({ reply });
 
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+ } catch (error) {
+  console.error(error);
+
+  return res.status(500).json({
+    error: error.message || "Unknown error"
+  });
 }
