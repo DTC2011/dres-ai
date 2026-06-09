@@ -10,6 +10,9 @@ export default async function handler(req, res) {
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
+    console.log("ACCOUNT:", accountId ? "exists" : "MISSING");
+    console.log("TOKEN:", apiToken ? "exists" : "MISSING");
+
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
@@ -22,16 +25,7 @@ export default async function handler(req, res) {
           messages: [
             {
               role: "system",
-              content: `
-Eres DRES AI, un tutor de matemáticas y ciencias.
-REGLAS:
-- Responde completo SIEMPRE, no cortes explicaciones.
-- Nunca dejes pasos incompletos.
-- Siempre termina el resultado final claramente.
-- Muestra pasos numerados simples.
-- Verifica resultados antes de responder.
-- Si es matemáticas, siempre incluye resultado final separado.
-`,
+              content: "Eres DRES AI, un tutor de matemáticas y ciencias. Responde completo SIEMPRE, no cortes explicaciones. Nunca dejes pasos incompletos. Siempre termina el resultado final claramente. Muestra pasos numerados simples. Verifica resultados antes de responder. Si es matemáticas, siempre incluye resultado final separado.",
             },
             {
               role: "user",
@@ -43,8 +37,6 @@ REGLAS:
     );
 
     const data = await response.json();
-
-    // Debug: log raw Cloudflare response once to confirm shape
     console.log("CLOUDFLARE RAW:", JSON.stringify(data, null, 2));
 
     if (!response.ok) {
@@ -54,7 +46,6 @@ REGLAS:
       });
     }
 
-    // Robust parsing — covers all known Llama 3.1 Workers AI response shapes
     const result = data?.result;
 
     const reply =
