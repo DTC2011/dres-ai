@@ -5,57 +5,123 @@
 <title>DRES AI</title>
 
 <style>
-body{margin:0;font-family:'Segoe UI';background:#0f172a;color:white}
-header{background:linear-gradient(90deg,#6366f1,#22c55e);padding:15px;text-align:center}
-nav{display:flex;justify-content:center;gap:10px;margin:10px}
-button{padding:10px;border:none;border-radius:10px;background:#6366f1;color:white;cursor:pointer}
-button:hover{background:#4f46e5}
-.container{padding:20px}
-input,select{padding:10px;border-radius:8px;border:none;margin:5px}
-.card{background:#1e293b;padding:15px;border-radius:15px;margin:10px;transition:.3s}
-.card:hover{transform:scale(1.03)}
-.high{border-left:5px solid red}
-.medium{border-left:5px solid orange}
-.low{border-left:5px solid green}
-.done{opacity:0.5;text-decoration:line-through}
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b1220;
+color:white;
+}
+
+header{
+padding:18px;
+text-align:center;
+font-size:20px;
+font-weight:bold;
+background:linear-gradient(90deg,#6366f1,#22c55e);
+}
+
+nav{
+display:flex;
+justify-content:center;
+gap:10px;
+padding:10px;
+flex-wrap:wrap;
+}
+
+button{
+padding:10px 14px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+background:#1f2937;
+color:white;
+transition:.2s;
+}
+
+button:hover{
+background:#6366f1;
+transform:scale(1.05);
+}
+
+.container{
+padding:20px;
+}
+
 .hidden{display:none}
-.chat{background:#334155;padding:8px;border-radius:8px;margin:5px}
-.user{background:#6366f1}
+
+/* TASKS */
+.card{
+background:rgba(255,255,255,0.06);
+backdrop-filter:blur(10px);
+padding:15px;
+border-radius:15px;
+margin:10px 0;
+border:1px solid rgba(255,255,255,0.1);
+}
+
+.chatBox{
+height:400px;
+overflow-y:auto;
+background:rgba(255,255,255,0.05);
+padding:10px;
+border-radius:15px;
+margin-bottom:10px;
+}
+
+.msg{
+padding:10px;
+margin:8px 0;
+border-radius:12px;
+max-width:80%;
+}
+
+.user{
+background:#6366f1;
+margin-left:auto;
+text-align:right;
+}
+
+.ai{
+background:#1f2937;
+}
+
+input, select{
+padding:10px;
+border-radius:10px;
+border:none;
+margin:5px;
+background:#111827;
+color:white;
+}
+
 </style>
 </head>
 
 <body>
 
-<header>DRES AI</header>
+<header>🤖 DRES AI GIGACHAD</header>
 
 <nav>
 <button onclick="show('tasks')">📚 Tareas</button>
 <button onclick="show('board')">🧠 Pizarrón</button>
 <button onclick="show('chat')">💬 IA</button>
+
+<select id="mode" onchange="setMode(this.value)">
+<option value="profesor">👨‍🏫 Profesor</option>
+<option value="corto">⚡ Corto</option>
+<option value="examen">📝 Examen</option>
+</select>
 </nav>
 
+<!-- TASKS -->
 <div id="tasks" class="container">
 <input id="taskInput" placeholder="Nueva tarea">
 <input id="descInput" placeholder="Descripción">
-
-<select id="subject">
-<option>Matemáticas</option>
-<option>Física</option>
-<option>Química</option>
-<option>Informática</option>
-<option>Historia</option>
-</select>
-
-<select id="priority">
-<option value="high">Alta</option>
-<option value="medium">Media</option>
-<option value="low">Baja</option>
-</select>
-
 <button onclick="addTask()">Agregar</button>
 <div id="taskList"></div>
 </div>
 
+<!-- BOARD -->
 <div id="board" class="container hidden">
 <button onclick="render()">Todas</button>
 <button onclick="filter('Matemáticas')">Mate</button>
@@ -63,119 +129,202 @@ input,select{padding:10px;border-radius:8px;border:none;margin:5px}
 <div id="boardList"></div>
 </div>
 
+<!-- CHAT -->
 <div id="chat" class="container hidden">
-<input id="chatInput">
+
+<div id="chatBox" class="chatBox"></div>
+
+<input id="chatInput" placeholder="Escribe aquí...">
 <button onclick="send()">Enviar</button>
-<div id="chatBox"></div>
+
 </div>
 
 <script>
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-function save(){localStorage.setItem("tasks",JSON.stringify(tasks))}
+/* ======================
+   STATE GIGACHAD
+====================== */
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let chatHistory = [];
+let mode = "profesor";
+
+/* ======================
+   UI CONTROL
+====================== */
 
 function show(id){
-["tasks","board","chat"].forEach(s=>document.getElementById(s).classList.add("hidden"));
+["tasks","board","chat"].forEach(s=>{
+document.getElementById(s).classList.add("hidden");
+});
 document.getElementById(id).classList.remove("hidden");
 }
 
-function addTask(){
-let text=taskInput.value;
-let desc=descInput.value;
-let subject=subject.value;
-let priority=priority.value;
-
-if(!text)return;
-
-tasks.push({text,desc,subject,priority,done:false});
-taskInput.value="";descInput.value="";
-save();render();
+function setMode(m){
+mode = m;
 }
 
-function render(filter=null){
+/* ======================
+   TASKS
+====================== */
+
+function save(){
+localStorage.setItem("tasks",JSON.stringify(tasks));
+}
+
+function addTask(){
+
+let text = taskInput.value;
+let desc = descInput.value;
+
+if(!text) return;
+
+tasks.push({
+text,
+desc,
+done:false
+});
+
+taskInput.value="";
+descInput.value="";
+
+save();
+render();
+}
+
+function render(){
+
 taskList.innerHTML="";
 boardList.innerHTML="";
 
 tasks.forEach((t,i)=>{
 
-if(filter && t.subject!==filter) return;
+let c = document.createElement("div");
+c.className="card";
 
-function card(){
-let c=document.createElement("div");
-c.className="card "+t.priority+(t.done?" done":"");
+c.innerHTML = `
+<b>${t.text}</b><br>
+<small>${t.desc || ""}</small>
+`;
 
-c.innerHTML=`<b>${t.text}</b><br><small>${t.desc||""}</small><br>${t.subject}<br>`;
-
-let b1=document.createElement("button");
+let b1 = document.createElement("button");
 b1.textContent="🧠 IA";
-b1.onclick=()=>aiTask(i);
+b1.onclick=()=>aiTask(t);
 
-let b2=document.createElement("button");
+let b2 = document.createElement("button");
 b2.textContent="✅";
 b2.onclick=()=>toggle(i);
 
 c.appendChild(b1);
 c.appendChild(b2);
 
-return c;
-}
-
-taskList.appendChild(card());
-boardList.appendChild(card());
+taskList.appendChild(c);
+boardList.appendChild(c.cloneNode(true));
 
 });
-}
 
-function filter(sub){render(sub)}
+}
 
 function toggle(i){
-tasks[i].done=!tasks[i].done;
-save();render();
+tasks[i].done = !tasks[i].done;
+save();
+render();
 }
 
-async function aiTask(i){
-let t=tasks[i];
+/* ======================
+   DETECT MATERIA
+====================== */
 
-let res=await fetch("/api/ai",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({prompt:`Explica paso a paso: ${t.text} ${t.desc}`})
+function detectSubject(text){
+text = text.toLowerCase();
+
+if(text.includes("x") || text.includes("resolver") || text.includes("función")){
+return "matemáticas";
+}
+if(text.includes("física")){
+return "física";
+}
+if(text.includes("historia")){
+return "historia";
+}
+return "general";
+}
+
+/* ======================
+   AI TASK
+====================== */
+
+async function aiTask(task){
+
+let subject = detectSubject(task.text + task.desc);
+
+chatHistory.push({
+role:"user",
+content:`[modo:${mode} | materia:${subject}] Explica: ${task.text} ${task.desc}`
 });
 
-let data=await res.json();
+let res = await fetch("/api/ai",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+messages:chatHistory,
+max_tokens:800
+})
+});
 
-if (data.reply) {
-  alert(data.reply);
-} else {
-  alert("Error: " + JSON.stringify(data));
+let data = await res.json();
+
+chatHistory.push({
+role:"assistant",
+content:data.reply || "Sin respuesta"
+});
+
+alert(data.reply || JSON.stringify(data));
+
 }
-}
+
+/* ======================
+   CHAT
+====================== */
 
 async function send(){
-let msg=chatInput.value;
-if(!msg)return;
 
-chatBox.innerHTML+=`<div class="chat user">🧑 ${msg}</div>`;
+let msg = chatInput.value;
+if(!msg) return;
 
-let res=await fetch("/api/ai",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({prompt:msg})
+chatHistory.push({
+role:"user",
+content:`[modo:${mode}] ${msg}`
 });
 
-let data=await res.json();
+chatBox.innerHTML += `<div class="msg user">${msg}</div>`;
 
-if (data.reply) {
-  chatBox.innerHTML+=`<div class="chat">🤖 ${data.reply}</div>`;
-} else {
-  chatBox.innerHTML+=`<div class="chat">❌ Error: ${JSON.stringify(data)}</div>`;
-}
+let res = await fetch("/api/ai",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+messages:chatHistory,
+max_tokens:800
+})
+});
+
+let data = await res.json();
+
+let reply = data.reply || "Sin respuesta";
+
+chatHistory.push({
+role:"assistant",
+content:reply
+});
+
+chatBox.innerHTML += `<div class="msg ai">${reply}</div>`;
 
 chatInput.value="";
 chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 render();
+
 </script>
 
 </body>
