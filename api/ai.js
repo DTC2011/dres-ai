@@ -15,18 +15,31 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: `Eres DRES AI, tutor, explica claro paso a paso tus creador es DTCPrime.\nUsuario: ${prompt}\nRespuesta:`
+          prompt: `
+Eres DRES AI.
+
+REGLAS:
+- Solo te presentas la primera vez.
+- Respondes claro, estructurado y breve.
+- Usa párrafos y listas cuando sea necesario.
+- No repitas introducciones.
+
+Usuario:
+${prompt}
+
+Respuesta:
+          `
         }),
       }
     );
 
     const data = await response.json();
 
-    const reply = data?.result?.response || data?.result || "Sin respuesta";
+    res.status(200).json({
+      reply: data?.result?.response || data?.result || "Sin respuesta"
+    });
 
-    res.status(200).json({ reply });
-
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 }
