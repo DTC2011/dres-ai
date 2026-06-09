@@ -15,7 +15,6 @@ color:white;
 header{
 padding:18px;
 text-align:center;
-font-size:20px;
 font-weight:bold;
 background:linear-gradient(90deg,#6366f1,#22c55e);
 }
@@ -35,40 +34,34 @@ border-radius:12px;
 cursor:pointer;
 background:#1f2937;
 color:white;
-transition:.2s;
 }
 
 button:hover{
 background:#6366f1;
-transform:scale(1.05);
 }
 
-.container{
-padding:20px;
-}
-
-.hidden{display:none}
+.container{padding:20px;}
+.hidden{display:none;}
 
 .card{
 background:rgba(255,255,255,0.06);
 padding:15px;
-border-radius:15px;
+border-radius:12px;
 margin:10px 0;
 }
 
 .chatBox{
-height:350px;
+height:400px;
 overflow-y:auto;
 background:rgba(255,255,255,0.05);
 padding:10px;
-border-radius:15px;
-margin-bottom:10px;
+border-radius:12px;
 }
 
 .msg{
 padding:10px;
 margin:8px 0;
-border-radius:12px;
+border-radius:10px;
 max-width:80%;
 }
 
@@ -96,7 +89,7 @@ width:70%;
 
 <body>
 
-<header>🤖 DRES AI GIGACHAD</header>
+<header>🤖 DRES AI GOD MODE</header>
 
 <nav>
 <button onclick="show('tasks')">📚 Tareas</button>
@@ -116,32 +109,38 @@ width:70%;
 
 <div id="chatBox" class="chatBox"></div>
 
-<input id="chatInput" placeholder="Escribe aquí...">
+<input id="chatInput" placeholder="Escribe...">
 <button onclick="send()">Enviar</button>
 
 </div>
 
 <script>
 
-console.log("DRES AI cargado");
+console.log("DRES AI ONLINE");
 
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let chatHistory = [];
+let mode = "profesor";
+let isLoading = false;
 
+/* ENTER */
+chatInput.addEventListener("keydown",(e)=>{
+if(e.key==="Enter") send();
+});
+
+/* NAV */
 function show(id){
-document.getElementById("tasks").classList.add("hidden");
-document.getElementById("chat").classList.add("hidden");
+["tasks","chat"].forEach(s=>{
+document.getElementById(s).classList.add("hidden");
+});
 document.getElementById(id).classList.remove("hidden");
 }
 
 /* TASKS */
-
 function save(){
 localStorage.setItem("tasks",JSON.stringify(tasks));
 }
 
 function addTask(){
-
 let text = taskInput.value;
 let desc = descInput.value;
 
@@ -176,11 +175,51 @@ taskList.appendChild(c);
 });
 }
 
-/* AI */
+/* COMMANDS */
+function handleCommand(text){
 
+let t = text.toLowerCase().trim();
+
+if(t==="modo examen"){
+mode="examen";
+addSystem("📝 Modo EXAMEN");
+return true;
+}
+
+if(t==="modo profesor"){
+mode="profesor";
+addSystem("👨‍🏫 Modo PROFESOR");
+return true;
+}
+
+if(t==="modo corto"){
+mode="corto";
+addSystem("⚡ Modo CORTO");
+return true;
+}
+
+if(t==="limpiar"){
+chatBox.innerHTML="";
+addSystem("🧹 Chat limpio");
+return true;
+}
+
+return false;
+}
+
+function addSystem(text){
+chatBox.innerHTML += `<div class="msg ai" style="opacity:.6;text-align:center;">${text}</div>`;
+}
+
+/* AI TASK */
 async function askAI(task){
 
-let prompt = `Explica paso a paso: ${task.text} ${task.desc}`;
+if(isLoading) return;
+isLoading = true;
+
+let prompt = `[modo:${mode}] ${task.text} ${task.desc}`;
+
+chatBox.innerHTML += `<div class="msg ai" id="thinking">🤖 Pensando...</div>`;
 
 let res = await fetch("/api/ai",{
 method:"POST",
@@ -190,30 +229,57 @@ body:JSON.stringify({prompt})
 
 let data = await res.json();
 
-alert(data.reply || "Sin respuesta");
+document.getElementById("thinking")?.remove();
+
+chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
+
+isLoading = false;
 }
 
 /* CHAT */
-
 async function send(){
 
 let msg = chatInput.value;
 if(!msg) return;
 
+/* COMMANDS */
+if(handleCommand(msg)){
+chatInput.value="";
+return;
+}
+
+if(isLoading) return;
+
+isLoading = true;
+
 chatBox.innerHTML += `<div class="msg user">${msg}</div>`;
+chatInput.value="";
+
+chatBox.innerHTML += `<div class="msg ai" id="thinking">🤖 Pensando...</div>`;
+
+try{
 
 let res = await fetch("/api/ai",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({prompt:msg})
+body:JSON.stringify({prompt:`[modo:${mode}] ${msg}`})
 });
 
 let data = await res.json();
 
-chatBox.innerHTML += `<div class="msg ai">${data.reply || "Sin respuesta"}</div>`;
+document.getElementById("thinking")?.remove();
 
-chatInput.value="";
+chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
+
 chatBox.scrollTop = chatBox.scrollHeight;
+
+}catch(e){
+
+document.getElementById("thinking")?.remove();
+chatBox.innerHTML += `<div class="msg ai">❌ Error</div>`;
+}
+
+isLoading = false;
 }
 
 render();
