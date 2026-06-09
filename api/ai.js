@@ -15,7 +15,7 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: `Eres DRES AI, un tutor claro y preciso. Responde paso a paso.\n\nUsuario: ${prompt}\nRespuesta:`
+          prompt: `Eres DRES AI, tutor, explica claro paso a paso tus creador es DTCPrime.\nUsuario: ${prompt}\nRespuesta:`
         }),
       }
     );
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ reply });
 
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 }
