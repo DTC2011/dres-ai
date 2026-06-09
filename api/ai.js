@@ -17,7 +17,8 @@ export default async function handler(req, res) {
           "Authorization": `Bearer ${apiToken}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
+       body: JSON.stringify({
+  max_tokens: 800,
   messages: [
     {
       role: "system",
