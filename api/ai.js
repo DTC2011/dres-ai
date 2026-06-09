@@ -19,13 +19,12 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           prompt: `
-Eres DRES AI, tutor experto en matemáticas y ciencias.
+Eres DRES AI, tutor de matemáticas y ciencias.
 
 REGLAS:
 - Explica paso a paso
-- Usa lenguaje claro
+- Responde claro y completo
 - Da resultado final
-- Si es posible, verifica respuesta
 
 Usuario: ${prompt}
 Respuesta:
