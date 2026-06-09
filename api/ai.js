@@ -5,8 +5,6 @@ export default async function handler(req, res) {
 
   try {
     const { prompt } = req.body;
-
-    // FIX EXTRA: log prompt for debugging
     console.log("PROMPT:", prompt);
 
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -20,7 +18,6 @@ export default async function handler(req, res) {
           "Authorization": `Bearer ${apiToken}`,
           "Content-Type": "application/json",
         },
-        // FIX 1: removed max_tokens — not supported by Workers AI, breaks requests silently
         body: JSON.stringify({
           messages: [
             {
@@ -47,7 +44,9 @@ REGLAS:
 
     const data = await response.json();
 
-    // FIX 2: better Cloudflare error parsing
+    // Debug: log raw Cloudflare response once to confirm shape
+    console.log("CLOUDFLARE RAW:", JSON.stringify(data, null, 2));
+
     if (!response.ok) {
       console.log("Cloudflare error:", JSON.stringify(data, null, 2));
       return res.status(500).json({
@@ -55,12 +54,17 @@ REGLAS:
       });
     }
 
+    // Robust parsing — covers all known Llama 3.1 Workers AI response shapes
+    const result = data?.result;
+
     const reply =
-      data?.result?.response ??
-      data?.result?.output ??
-      data?.result?.text ??
-      JSON.stringify(data) ??
-      "Sin respuesta";
+      typeof result?.response === "string"
+        ? result.response
+        : result?.response?.response
+        ?? result?.output
+        ?? result?.text
+        ?? (typeof result === "string" ? result : null)
+        ?? "Sin respuesta";
 
     res.status(200).json({ reply });
 
