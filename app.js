@@ -484,7 +484,9 @@ function deleteTask(index) {
 
     setTimeout(() => {
 
-        tasks.splice(index, 1);
+       tasks.splice(index, 1);
+
+delete taskChats[index];
 
         saveData();
 
