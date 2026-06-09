@@ -14,18 +14,29 @@ export default async function handler(req, res) {
           "Authorization": `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          prompt: `
+body: JSON.stringify({
+
+    prompt: `
 Eres DRES AI.
 
 REGLAS:
+- Nunca cortes una respuesta.
+- Siempre termina todas las listas.
+- Si una explicación es larga, continúa hasta finalizarla.
+- Finaliza con una sección llamada "Resultado final".
+- Usa listas y párrafos estructurados.
 - Solo te presentas la primera vez.
 - Respondes claro, estructurado y breve.
-- Usa párrafos y listas cuando sea necesario.
 - No repitas introducciones.
 
-Usuario:
+
 ${prompt}
+
+`,
+
+    max_tokens: 1500
+
+})
 
 Respuesta:
           `
