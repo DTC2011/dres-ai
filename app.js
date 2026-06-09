@@ -353,8 +353,7 @@ document.addEventListener(
 
 function renderTasks() {
 
-    const container =
-        document.getElementById("tasksList");
+    const container = document.getElementById("tasksList");
 
     if (!container) return;
 
@@ -362,20 +361,47 @@ function renderTasks() {
 
     tasks.forEach((task, index) => {
 
+        if (!taskChats[index]) {
+            taskChats[index] = [];
+        }
+
         const card = document.createElement("div");
 
         card.className = "task-card";
 
         card.dataset.index = index;
 
+        let messagesHTML = "";
+
+        taskChats[index].forEach(msg => {
+
+            messagesHTML += `
+                <div class="${
+                    msg.role === "user"
+                        ? "user-message"
+                        : "ai-message"
+                }">
+
+                    ${escapeHTML(msg.content)
+                        .replace(/\n/g,"<br>")}
+
+                </div>
+            `;
+        });
+
         card.innerHTML = `
+
             <h3>${escapeHTML(task.title)}</h3>
 
             <p>${escapeHTML(task.description || "")}</p>
 
             <small>
                 Estado:
-                ${task.completed ? "✅ Completada" : "🕒 Pendiente"}
+                ${
+                    task.completed
+                        ? "✅ Completada"
+                        : "🕒 Pendiente"
+                }
             </small>
 
             <div class="task-actions">
@@ -385,7 +411,11 @@ function renderTasks() {
                 </button>
 
                 <button onclick="toggleTask(${index})">
-                    ${task.completed ? "↩️ Reabrir" : "✅ Completar"}
+                    ${
+                        task.completed
+                            ? "↩️ Reabrir"
+                            : "✅ Completar"
+                    }
                 </button>
 
                 <button onclick="deleteTask(${index})">
@@ -394,7 +424,27 @@ function renderTasks() {
 
             </div>
 
-            <div id="task-chat-${index}"></div>
+            <div id="task-chat-${index}" class="task-chat">
+
+                ${messagesHTML}
+
+            </div>
+
+            <div class="task-follow-up">
+
+                <input
+                    id="task-input-${index}"
+                    placeholder="Haz una pregunta de seguimiento...">
+
+                <button
+                    onclick="sendTaskMessage(${index})">
+
+                    Enviar
+
+                </button>
+
+            </div>
+
         `;
 
         container.appendChild(card);
@@ -402,8 +452,6 @@ function renderTasks() {
     });
 
 }
-
-
 /* ===== AGREGAR ===== */
 
 function addTask() {
