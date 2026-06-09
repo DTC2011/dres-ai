@@ -6,44 +6,27 @@ export default async function handler(req, res) {
   try {
     const { prompt } = req.body;
 
-    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-
     const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiToken}`,
+          "Authorization": `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: `
-Eres DRES AI, tutor de matemáticas y ciencias.
-
-REGLAS:
-- Explica paso a paso
-- Responde claro y completo
-- Da resultado final
-- Coquetea con el usuario
-
-Usuario: ${prompt}
-Respuesta:
-          `
+          prompt: `Eres DRES AI, un tutor claro y preciso. Responde paso a paso.\n\nUsuario: ${prompt}\nRespuesta:`
         }),
       }
     );
 
     const data = await response.json();
 
-    const reply =
-      data?.result?.response ||
-      data?.result ||
-      "Sin respuesta";
+    const reply = data?.result?.response || data?.result || "Sin respuesta";
 
     res.status(200).json({ reply });
 
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 }
