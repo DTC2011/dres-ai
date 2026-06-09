@@ -1,158 +1,8 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>DRES AI</title>
-
-<style>
-body{
-margin:0;
-font-family:Segoe UI;
-background:#0b1220;
-color:white;
-}
-
-header{
-padding:18px;
-text-align:center;
-font-size:20px;
-font-weight:bold;
-background:linear-gradient(90deg,#6366f1,#22c55e);
-}
-
-nav{
-display:flex;
-justify-content:center;
-gap:10px;
-padding:10px;
-flex-wrap:wrap;
-}
-
-button{
-padding:10px 14px;
-border:none;
-border-radius:12px;
-cursor:pointer;
-background:#1f2937;
-color:white;
-transition:.2s;
-}
-
-button:hover{
-background:#6366f1;
-transform:scale(1.05);
-}
-
-.container{
-padding:20px;
-}
-
-.hidden{display:none}
-
-/* TASKS */
-.card{
-background:rgba(255,255,255,0.06);
-backdrop-filter:blur(10px);
-padding:15px;
-border-radius:15px;
-margin:10px 0;
-border:1px solid rgba(255,255,255,0.1);
-}
-
-.chatBox{
-height:400px;
-overflow-y:auto;
-background:rgba(255,255,255,0.05);
-padding:10px;
-border-radius:15px;
-margin-bottom:10px;
-}
-
-.msg{
-padding:10px;
-margin:8px 0;
-border-radius:12px;
-max-width:80%;
-}
-
-.user{
-background:#6366f1;
-margin-left:auto;
-text-align:right;
-}
-
-.ai{
-background:#1f2937;
-}
-
-input, select{
-padding:10px;
-border-radius:10px;
-border:none;
-margin:5px;
-background:#111827;
-color:white;
-}
-
-</style>
-</head>
-
-<body>
-
-<header>🤖 DRES AI GIGACHAD</header>
-
-<nav>
-<button onclick="show('tasks')">📚 Tareas</button>
-<button onclick="show('board')">🧠 Pizarrón</button>
-<button onclick="show('chat')">💬 IA</button>
-
-<select id="mode" onchange="setMode(this.value)">
-<option value="profesor">👨‍🏫 Profesor</option>
-<option value="corto">⚡ Corto</option>
-<option value="examen">📝 Examen</option>
-</select>
-</nav>
-
-<!-- TASKS -->
-<div id="tasks" class="container">
-<input id="taskInput" placeholder="Nueva tarea">
-<input id="descInput" placeholder="Descripción">
-<button onclick="addTask()">Agregar</button>
-<div id="taskList"></div>
-</div>
-
-<!-- BOARD -->
-<div id="board" class="container hidden">
-<button onclick="render()">Todas</button>
-<button onclick="filter('Matemáticas')">Mate</button>
-<button onclick="filter('Física')">Física</button>
-<div id="boardList"></div>
-</div>
-
-<!-- CHAT -->
-<div id="chat" class="container hidden">
-
-<div id="chatBox" class="chatBox"></div>
-
-<input id="chatInput" placeholder="Escribe aquí...">
-<button onclick="send()">Enviar</button>
-
-</div>
-
-<script>
-
-/* ======================
-   STATE GIGACHAD
-====================== */
-
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let chatHistory = [];
 let mode = "profesor";
 
-/* ======================
-   UI CONTROL
-====================== */
-
+/* UI */
 function show(id){
 ["tasks","board","chat"].forEach(s=>{
 document.getElementById(s).classList.add("hidden");
@@ -164,26 +14,18 @@ function setMode(m){
 mode = m;
 }
 
-/* ======================
-   TASKS
-====================== */
-
+/* TASKS */
 function save(){
 localStorage.setItem("tasks",JSON.stringify(tasks));
 }
 
 function addTask(){
-
 let text = taskInput.value;
 let desc = descInput.value;
 
 if(!text) return;
 
-tasks.push({
-text,
-desc,
-done:false
-});
+tasks.push({text,desc,done:false});
 
 taskInput.value="";
 descInput.value="";
@@ -193,7 +35,6 @@ render();
 }
 
 function render(){
-
 taskList.innerHTML="";
 boardList.innerHTML="";
 
@@ -202,10 +43,7 @@ tasks.forEach((t,i)=>{
 let c = document.createElement("div");
 c.className="card";
 
-c.innerHTML = `
-<b>${t.text}</b><br>
-<small>${t.desc || ""}</small>
-`;
+c.innerHTML = `<b>${t.text}</b><br><small>${t.desc||""}</small>`;
 
 let b1 = document.createElement("button");
 b1.textContent="🧠 IA";
@@ -222,23 +60,19 @@ taskList.appendChild(c);
 boardList.appendChild(c.cloneNode(true));
 
 });
-
 }
 
 function toggle(i){
-tasks[i].done = !tasks[i].done;
+tasks[i].done=!tasks[i].done;
 save();
 render();
 }
 
-/* ======================
-   DETECT MATERIA
-====================== */
-
+/* DETECT MATERIA */
 function detectSubject(text){
 text = text.toLowerCase();
 
-if(text.includes("x") || text.includes("resolver") || text.includes("función")){
+if(text.includes("x") || text.includes("función") || text.includes("resolver")){
 return "matemáticas";
 }
 if(text.includes("física")){
@@ -250,72 +84,43 @@ return "historia";
 return "general";
 }
 
-/* ======================
-   AI TASK
-====================== */
-
+/* AI TASK */
 async function aiTask(task){
 
 let subject = detectSubject(task.text + task.desc);
 
-chatHistory.push({
-role:"user",
-content:`[modo:${mode} | materia:${subject}] Explica: ${task.text} ${task.desc}`
-});
+let prompt = `[modo:${mode} | materia:${subject}] Explica: ${task.text} ${task.desc}`;
 
 let res = await fetch("/api/ai",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-messages:chatHistory,
-max_tokens:800
-})
+body:JSON.stringify({prompt})
 });
 
 let data = await res.json();
 
-chatHistory.push({
-role:"assistant",
-content:data.reply || "Sin respuesta"
-});
-
 alert(data.reply || JSON.stringify(data));
-
 }
 
-/* ======================
-   CHAT
-====================== */
-
+/* CHAT */
 async function send(){
 
 let msg = chatInput.value;
 if(!msg) return;
 
-chatHistory.push({
-role:"user",
-content:`[modo:${mode}] ${msg}`
-});
+let prompt = `[modo:${mode}] ${msg}`;
 
 chatBox.innerHTML += `<div class="msg user">${msg}</div>`;
 
 let res = await fetch("/api/ai",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-messages:chatHistory,
-max_tokens:800
-})
+body:JSON.stringify({prompt})
 });
 
 let data = await res.json();
 
 let reply = data.reply || "Sin respuesta";
-
-chatHistory.push({
-role:"assistant",
-content:reply
-});
 
 chatBox.innerHTML += `<div class="msg ai">${reply}</div>`;
 
@@ -324,8 +129,3 @@ chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 render();
-
-</script>
-
-</body>
-</html>
