@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
     const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3-8b-instruct-awq`,
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
         method: "POST",
         headers: {
