@@ -2,108 +2,66 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>DRES AI PRO0.0.9</title>
+<title>DRES AI SaaS</title>
 
 <style>
 
-/* ===== THEME ===== */
-:root{
---bg:#0f172a;
---panel:#111827;
---text:#fff;
---border:rgba(255,255,255,0.08);
---user:#2563eb;
---ai:#1f2937;
-}
-
-body.light{
---bg:#f5f5f5;
---panel:#fff;
---text:#111;
---border:rgba(0,0,0,0.1);
---user:#2563eb;
---ai:#e5e7eb;
-}
-
+/* ===== DARK SAAS STYLE ===== */
 body{
 margin:0;
 font-family:system-ui;
-background:var(--bg);
-color:var(--text);
-height:100vh;
+background:#0a0a0a;
+color:#fff;
 display:flex;
-flex-direction:column;
+height:100vh;
 }
 
-/* HEADER */
 header{
 padding:14px;
 text-align:center;
+background:#111;
+border-bottom:1px solid #222;
 font-weight:600;
-border-bottom:1px solid var(--border);
 }
 
-/* NAV */
-nav{
-display:flex;
-gap:10px;
-justify-content:center;
+/* LAYOUT */
+.sidebar{
+width:260px;
+background:#111;
+border-right:1px solid #222;
 padding:10px;
-border-bottom:1px solid var(--border);
-flex-wrap:wrap;
 }
 
-/* BUTTON */
-button{
-padding:10px 14px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-background:var(--panel);
-color:var(--text);
-border:1px solid var(--border);
-}
-
-button:hover{
-background:#2563eb;
-color:white;
-}
-
-/* CONTAINERS */
-.container{
-display:none;
-padding:20px;
-}
-
-.active{
-display:block;
+.main{
+flex:1;
+display:flex;
+flex-direction:column;
 }
 
 /* CHAT */
 #chatBox{
-height:55vh;
+flex:1;
+padding:15px;
 overflow-y:auto;
 display:flex;
 flex-direction:column;
 gap:10px;
-padding:10px;
 }
 
 .msg{
-max-width:75%;
-padding:12px;
-border-radius:12px;
+max-width:70%;
+padding:10px;
+border-radius:10px;
 }
 
 .user{
-background:var(--user);
+background:#2563eb;
 align-self:flex-end;
-color:white;
 }
 
 .ai{
-background:var(--panel);
-border:1px solid var(--border);
+background:#1a1a1a;
+border:1px solid #222;
 align-self:flex-start;
 }
 
@@ -112,36 +70,61 @@ align-self:flex-start;
 display:flex;
 gap:10px;
 padding:10px;
-border-top:1px solid var(--border);
+border-top:1px solid #222;
 }
 
 input{
 flex:1;
 padding:10px;
-border-radius:10px;
-border:1px solid var(--border);
-background:var(--panel);
-color:var(--text);
+background:#111;
+border:1px solid #222;
+color:white;
+border-radius:8px;
+}
+
+button{
+padding:10px;
+border:none;
+background:#2563eb;
+color:white;
+border-radius:8px;
+cursor:pointer;
 }
 
 /* TASKS */
-.card{
-background:var(--panel);
-border:1px solid var(--border);
-padding:12px;
-border-radius:12px;
+.task{
+background:#111;
+border:1px solid #222;
+padding:10px;
+border-radius:10px;
 margin-bottom:10px;
-transition:all .35s ease;
 }
 
-.task-exit{
-transform:translateX(120%);
-opacity:0;
+.task-title{
+font-weight:600;
 }
 
-.done{
-opacity:0.5;
-text-decoration:line-through;
+.task-panel{
+display:none;
+margin-top:10px;
+padding:10px;
+border-top:1px solid #222;
+}
+
+.task.open .task-panel{
+display:block;
+}
+
+.task-actions{
+display:flex;
+gap:5px;
+margin-top:5px;
+}
+
+.smallBtn{
+background:#222;
+font-size:12px;
+padding:5px;
 }
 
 </style>
@@ -149,17 +132,20 @@ text-decoration:line-through;
 
 <body>
 
-<header>🤖 DRES AI PRO MAX</header>
+<!-- SIDEBAR -->
+<div class="sidebar">
+<h3>📚 Tareas</h3>
+<input id="taskInput" placeholder="Título">
+<input id="descInput" placeholder="Descripción">
+<button onclick="addTask()">Agregar</button>
 
-<nav>
-<button onclick="show('chat')">💬 Chat</button>
-<button onclick="show('tasks')">📚 Tareas</button>
-<button onclick="show('board')">🧠 Pizarrón</button>
-<button onclick="toggleTheme()">🌓</button>
-</nav>
+<div id="taskList"></div>
+</div>
 
-<!-- CHAT -->
-<div id="chat" class="container active">
+<!-- MAIN -->
+<div class="main">
+
+<header>🤖 DRES AI SaaS</header>
 
 <div id="chatBox"></div>
 
@@ -170,68 +156,16 @@ text-decoration:line-through;
 
 </div>
 
-<!-- TASKS -->
-<div id="tasks" class="container">
-
-<input id="taskInput" placeholder="Nueva tarea">
-<input id="descInput" placeholder="Descripción">
-<button onclick="addTask()">Agregar</button>
-
-<div id="taskList"></div>
-
-</div>
-
-<!-- BOARD -->
-<div id="board" class="container">
-<div id="boardList"></div>
-</div>
-
 <script>
 
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let mode = "profesor";
-let loading = false;
+let chatBox = document.getElementById("chatBox");
 
-/* NAV */
-function show(id){
-document.querySelectorAll(".container").forEach(c=>c.classList.remove("active"));
-document.getElementById(id).classList.add("active");
-}
-
-function toggleTheme(){
-document.body.classList.toggle("light");
-}
-
-/* ENTER */
-chatInput.addEventListener("keydown",(e)=>{
-if(e.key==="Enter") send();
-});
-
-/* COMMANDS */
-function handleCommand(text){
-
-text = text.toLowerCase().trim();
-
-if(text==="modo examen"){mode="examen"; return true;}
-if(text==="modo profesor"){mode="profesor"; return true;}
-if(text==="modo corto"){mode="corto"; return true;}
-if(text==="limpiar"){chatBox.innerHTML=""; return true;}
-
-return false;
-}
-
-/* CHAT */
+/* ===== CHAT ===== */
 async function send(){
 
 let msg = chatInput.value;
-if(!msg || loading) return;
-
-if(handleCommand(msg)){
-chatInput.value="";
-return;
-}
-
-loading = true;
+if(!msg) return;
 
 chatBox.innerHTML += `<div class="msg user">${msg}</div>`;
 chatInput.value="";
@@ -241,7 +175,7 @@ chatBox.innerHTML += `<div class="msg ai" id="thinking">Pensando...</div>`;
 let res = await fetch("/api/ai",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({prompt:`[modo:${mode}] ${msg}`})
+body:JSON.stringify({prompt:msg})
 });
 
 let data = await res.json();
@@ -249,13 +183,9 @@ let data = await res.json();
 document.getElementById("thinking")?.remove();
 
 chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
-
-chatBox.scrollTop = chatBox.scrollHeight;
-
-loading = false;
 }
 
-/* TASKS */
+/* ===== TASKS ===== */
 function addTask(){
 
 let t = taskInput.value;
@@ -263,7 +193,12 @@ let d = descInput.value;
 
 if(!t) return;
 
-tasks.push({text:t,desc:d,done:false});
+tasks.push({
+title:t,
+desc:d,
+chat:[]
+});
+
 save();
 renderTasks();
 }
@@ -272,96 +207,90 @@ function save(){
 localStorage.setItem("tasks",JSON.stringify(tasks));
 }
 
-/* TASK RENDER */
+/* OPEN TASK PANEL */
+function toggleTask(i){
+tasks[i].open = !tasks[i].open;
+renderTasks();
+}
+
+/* TASK CHAT */
+async function sendTask(i, input){
+
+let task = tasks[i];
+
+task.chat.push({
+role:"user",
+content:`TAREA: ${task.title} - ${task.desc}\n\nUsuario: ${input}`
+});
+
+let res = await fetch("/api/ai",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+prompt:`Analiza esta tarea:\nTitulo: ${task.title}\nDescripcion: ${task.desc}\nPregunta: ${input}`
+})
+});
+
+let data = await res.json();
+
+task.chat.push({
+role:"ai",
+content:data.reply
+});
+
+save();
+renderTasks();
+}
+
+/* RENDER TASKS */
 function renderTasks(){
 
 taskList.innerHTML="";
 
 tasks.forEach((t,i)=>{
 
-let c=document.createElement("div");
-c.className="card "+(t.done?"done":"");
+let div = document.createElement("div");
+div.className="task "+(t.open?"open":"");
 
-c.innerHTML=`<b>${t.text}</b><br><small>${t.desc||""}</small>`;
+div.innerHTML=`
+<div class="task-title">${t.title}</div>
+<div>${t.desc||""}</div>
 
-/* IA BUTTON */
-let ai=document.createElement("button");
-ai.textContent="🧠 IA";
-ai.onclick=async ()=>{
+<div class="task-actions">
+<button class="smallBtn" onclick="toggleTask(${i})">Abrir</button>
+<button class="smallBtn" onclick="deleteTask(${i})">Eliminar</button>
+</div>
 
-chatBox.innerHTML += `
-<div class="msg user">📚 ${t.text}</div>
-<div class="msg ai" id="thinking">Pensando...</div>
+<div class="task-panel">
+<div id="chat-${i}"></div>
+
+<input id="input-${i}" placeholder="pregunta a IA">
+<button onclick="sendTask(${i}, document.getElementById('input-${i}').value)">Enviar</button>
+</div>
 `;
 
-let res = await fetch("/api/ai",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-prompt:`Explica esta tarea paso a paso: ${t.text} ${t.desc||""}`
-})
+taskList.appendChild(div);
+
+/* render chat */
+setTimeout(()=>{
+let c = document.getElementById("chat-"+i);
+if(!c) return;
+
+c.innerHTML = (t.chat||[]).map(m=>{
+return `<div class="msg ${m.role==='user'?'user':'ai'}">${m.content}</div>`;
+}).join("");
+
+},10);
+
 });
 
-let data = await res.json();
+}
 
-document.getElementById("thinking")?.remove();
-
-chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
-};
-
-/* DELETE ANIMATED */
-let del=document.createElement("button");
-del.textContent="🗑️";
-del.onclick=()=>{
-
-c.classList.add("task-exit");
-
-setTimeout(()=>{
+/* DELETE */
+function deleteTask(i){
 tasks.splice(i,1);
 save();
 renderTasks();
-},350);
-
-};
-
-/* DONE */
-let done=document.createElement("button");
-done.textContent="✓";
-done.onclick=()=>{
-
-tasks[i].done=!tasks[i].done;
-save();
-renderTasks();
-renderBoard();
-
-};
-
-c.appendChild(ai);
-c.appendChild(done);
-c.appendChild(del);
-
-taskList.appendChild(c);
-
-});
-
-renderBoard();
-}
-
-/* BOARD */
-function renderBoard(){
-
-boardList.innerHTML="";
-
-tasks.forEach(t=>{
-
-let c=document.createElement("div");
-c.className="card "+(t.done?"done":"");
-
-c.innerHTML=`<b>${t.text}</b><br><small>${t.desc||""}</small>`;
-
-boardList.appendChild(c);
-
-});
 }
 
 renderTasks();
