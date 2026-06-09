@@ -3,30 +3,25 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.HUGGINGFACE_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: "No API key configurada" });
+    return res.status(500).json({ error: "No Hugging Face API key configured" });
   }
 
   try {
     const { prompt } = req.body;
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent",
+      "https://api-inference.huggingface.co/models/google/flan-t5-large",
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
-          ]
+          inputs: prompt
         })
       }
     );
@@ -37,11 +32,12 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: data });
     }
 
-    const reply =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    let reply = "Sin respuesta";
 
-    if (!reply) {
-      return res.status(500).json({ error: data });
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      reply = data[0].generated_text;
+    } else if (data.generated_text) {
+      reply = data.generated_text;
     }
 
     res.status(200).json({ reply });
