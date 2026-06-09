@@ -1,31 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DRES AI</title>
+
+<style>
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b1220;
+color:white;
+}
+
+header{
+padding:18px;
+text-align:center;
+font-size:20px;
+font-weight:bold;
+background:linear-gradient(90deg,#6366f1,#22c55e);
+}
+
+nav{
+display:flex;
+justify-content:center;
+gap:10px;
+padding:10px;
+flex-wrap:wrap;
+}
+
+button{
+padding:10px 14px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+background:#1f2937;
+color:white;
+transition:.2s;
+}
+
+button:hover{
+background:#6366f1;
+transform:scale(1.05);
+}
+
+.container{
+padding:20px;
+}
+
+.hidden{display:none}
+
+.card{
+background:rgba(255,255,255,0.06);
+padding:15px;
+border-radius:15px;
+margin:10px 0;
+}
+
+.chatBox{
+height:350px;
+overflow-y:auto;
+background:rgba(255,255,255,0.05);
+padding:10px;
+border-radius:15px;
+margin-bottom:10px;
+}
+
+.msg{
+padding:10px;
+margin:8px 0;
+border-radius:12px;
+max-width:80%;
+}
+
+.user{
+background:#6366f1;
+margin-left:auto;
+text-align:right;
+}
+
+.ai{
+background:#1f2937;
+}
+
+input{
+padding:10px;
+border-radius:10px;
+border:none;
+margin:5px;
+background:#111827;
+color:white;
+width:70%;
+}
+</style>
+</head>
+
+<body>
+
+<header>🤖 DRES AI GIGACHAD</header>
+
+<nav>
+<button onclick="show('tasks')">📚 Tareas</button>
+<button onclick="show('chat')">💬 IA</button>
+</nav>
+
+<!-- TASKS -->
+<div id="tasks" class="container">
+<input id="taskInput" placeholder="Nueva tarea">
+<input id="descInput" placeholder="Descripción">
+<button onclick="addTask()">Agregar</button>
+<div id="taskList"></div>
+</div>
+
+<!-- CHAT -->
+<div id="chat" class="container hidden">
+
+<div id="chatBox" class="chatBox"></div>
+
+<input id="chatInput" placeholder="Escribe aquí...">
+<button onclick="send()">Enviar</button>
+
+</div>
+
+<script>
+
+console.log("DRES AI cargado");
+
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let chatHistory = [];
-let mode = "profesor";
 
-/* UI */
 function show(id){
-["tasks","board","chat"].forEach(s=>{
-document.getElementById(s).classList.add("hidden");
-});
+document.getElementById("tasks").classList.add("hidden");
+document.getElementById("chat").classList.add("hidden");
 document.getElementById(id).classList.remove("hidden");
 }
 
-function setMode(m){
-mode = m;
-}
-
 /* TASKS */
+
 function save(){
 localStorage.setItem("tasks",JSON.stringify(tasks));
 }
 
 function addTask(){
+
 let text = taskInput.value;
 let desc = descInput.value;
 
 if(!text) return;
 
-tasks.push({text,desc,done:false});
+tasks.push({text,desc});
 
 taskInput.value="";
 descInput.value="";
@@ -36,7 +158,6 @@ render();
 
 function render(){
 taskList.innerHTML="";
-boardList.innerHTML="";
 
 tasks.forEach((t,i)=>{
 
@@ -45,51 +166,21 @@ c.className="card";
 
 c.innerHTML = `<b>${t.text}</b><br><small>${t.desc||""}</small>`;
 
-let b1 = document.createElement("button");
-b1.textContent="🧠 IA";
-b1.onclick=()=>aiTask(t);
+let b = document.createElement("button");
+b.textContent="🧠 IA";
+b.onclick=()=>askAI(t);
 
-let b2 = document.createElement("button");
-b2.textContent="✅";
-b2.onclick=()=>toggle(i);
-
-c.appendChild(b1);
-c.appendChild(b2);
-
+c.appendChild(b);
 taskList.appendChild(c);
-boardList.appendChild(c.cloneNode(true));
 
 });
 }
 
-function toggle(i){
-tasks[i].done=!tasks[i].done;
-save();
-render();
-}
+/* AI */
 
-/* DETECT MATERIA */
-function detectSubject(text){
-text = text.toLowerCase();
+async function askAI(task){
 
-if(text.includes("x") || text.includes("función") || text.includes("resolver")){
-return "matemáticas";
-}
-if(text.includes("física")){
-return "física";
-}
-if(text.includes("historia")){
-return "historia";
-}
-return "general";
-}
-
-/* AI TASK */
-async function aiTask(task){
-
-let subject = detectSubject(task.text + task.desc);
-
-let prompt = `[modo:${mode} | materia:${subject}] Explica: ${task.text} ${task.desc}`;
+let prompt = `Explica paso a paso: ${task.text} ${task.desc}`;
 
 let res = await fetch("/api/ai",{
 method:"POST",
@@ -99,33 +190,35 @@ body:JSON.stringify({prompt})
 
 let data = await res.json();
 
-alert(data.reply || JSON.stringify(data));
+alert(data.reply || "Sin respuesta");
 }
 
 /* CHAT */
+
 async function send(){
 
 let msg = chatInput.value;
 if(!msg) return;
-
-let prompt = `[modo:${mode}] ${msg}`;
 
 chatBox.innerHTML += `<div class="msg user">${msg}</div>`;
 
 let res = await fetch("/api/ai",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({prompt})
+body:JSON.stringify({prompt:msg})
 });
 
 let data = await res.json();
 
-let reply = data.reply || "Sin respuesta";
-
-chatBox.innerHTML += `<div class="msg ai">${reply}</div>`;
+chatBox.innerHTML += `<div class="msg ai">${data.reply || "Sin respuesta"}</div>`;
 
 chatInput.value="";
 chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 render();
+
+</script>
+
+</body>
+</html>
