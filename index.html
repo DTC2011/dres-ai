@@ -1,301 +1,173 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>DRES AI 0.1.0</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRES AI</title>
 
-<style>
-
-/* ===== DARK SAAS STYLE ===== */
-body{
-margin:0;
-font-family:system-ui;
-background:#0a0a0a;
-color:#fff;
-display:flex;
-height:100vh;
-}
-
-header{
-padding:14px;
-text-align:center;
-background:#111;
-border-bottom:1px solid #222;
-font-weight:600;
-}
-
-/* LAYOUT */
-.sidebar{
-width:260px;
-background:#111;
-border-right:1px solid #222;
-padding:10px;
-}
-
-.main{
-flex:1;
-display:flex;
-flex-direction:column;
-}
-
-/* CHAT */
-#chatBox{
-flex:1;
-padding:15px;
-overflow-y:auto;
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.msg{
-max-width:70%;
-padding:10px;
-border-radius:10px;
-}
-
-.user{
-background:#2563eb;
-align-self:flex-end;
-}
-
-.ai{
-background:#1a1a1a;
-border:1px solid #222;
-align-self:flex-start;
-}
-
-/* INPUT */
-#inputArea{
-display:flex;
-gap:10px;
-padding:10px;
-border-top:1px solid #222;
-}
-
-input{
-flex:1;
-padding:10px;
-background:#111;
-border:1px solid #222;
-color:white;
-border-radius:8px;
-}
-
-button{
-padding:10px;
-border:none;
-background:#2563eb;
-color:white;
-border-radius:8px;
-cursor:pointer;
-}
-
-/* TASKS */
-.task{
-background:#111;
-border:1px solid #222;
-padding:10px;
-border-radius:10px;
-margin-bottom:10px;
-}
-
-.task-title{
-font-weight:600;
-}
-
-.task-panel{
-display:none;
-margin-top:10px;
-padding:10px;
-border-top:1px solid #222;
-}
-
-.task.open .task-panel{
-display:block;
-}
-
-.task-actions{
-display:flex;
-gap:5px;
-margin-top:5px;
-}
-
-.smallBtn{
-background:#222;
-font-size:12px;
-padding:5px;
-}
-
-</style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-<h3>📚 Tareas</h3>
-<input id="taskInput" placeholder="Título">
-<input id="descInput" placeholder="Descripción">
-<button onclick="addTask()">Agregar</button>
+    <!-- Sidebar -->
+    <aside class="sidebar">
 
-<div id="taskList"></div>
-</div>
+        <div class="logo">
+            🤖 <span>DRES AI</span>
+        </div>
 
-<!-- MAIN -->
-<div class="main">
+        <button class="nav-btn active" onclick="showSection('chat')">
+            💬 Chat
+        </button>
 
-<header> DRES AI 0.1.0</header>
+        <button class="nav-btn" onclick="showSection('tasks')">
+            📚 Tareas
+        </button>
 
-<div id="chatBox"></div>
+        <button class="nav-btn" onclick="showSection('dashboard')">
+            📊 Dashboard
+        </button>
 
-<div id="inputArea">
-<input id="chatInput" placeholder="Escribe...">
-<button onclick="send()">Enviar</button>
-</div>
+        <div class="sidebar-footer">
+            <small>DRES AI v2</small>
+        </div>
 
-</div>
+    </aside>
 
-<script>
 
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let chatBox = document.getElementById("chatBox");
+    <!-- Main -->
+    <main class="main-content">
 
-/* ===== CHAT ===== */
-async function send(){
+        <!-- CHAT -->
+        <section id="chat-section" class="section">
 
-let msg = chatInput.value;
-if(!msg) return;
+            <div class="page-header">
+                <h1>DRES AI</h1>
+                <p>Tu tutor inteligente.</p>
+            </div>
 
-chatBox.innerHTML += `<div class="msg user">${msg}</div>`;
-chatInput.value="";
+            <div class="suggestions">
 
-chatBox.innerHTML += `<div class="msg ai" id="thinking">Pensando...</div>`;
+                <div class="suggestion-card"
+                     onclick="useSuggestion('Explícame derivadas paso a paso')">
+                    📘 Derivadas
+                </div>
 
-let res = await fetch("/api/ai",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({prompt:msg})
-});
+                <div class="suggestion-card"
+                     onclick="useSuggestion('Ayúdame a estudiar física')">
+                    ⚛️ Física
+                </div>
 
-let data = await res.json();
+                <div class="suggestion-card"
+                     onclick="useSuggestion('Hazme un examen de matemáticas')">
+                    📝 Examen
+                </div>
 
-document.getElementById("thinking")?.remove();
+                <div class="suggestion-card"
+                     onclick="useSuggestion('Explícame historia como profesor')">
+                    🏛️ Historia
+                </div>
 
-chatBox.innerHTML += `<div class="msg ai">${data.reply}</div>`;
-}
+            </div>
 
-/* ===== TASKS ===== */
-function addTask(){
+            <div id="chatBox" class="chat-box">
 
-let t = taskInput.value;
-let d = descInput.value;
+                <div class="ai-message welcome">
+                    👋 Hola. Soy DRES AI.<br><br>
+                    Estoy listo para ayudarte.
+                </div>
 
-if(!t) return;
+            </div>
 
-tasks.push({
-title:t,
-desc:d,
-chat:[]
-});
+            <div id="typingIndicator" class="typing hidden">
+                🤖 DRES AI está pensando...
+            </div>
 
-save();
-renderTasks();
-}
+            <div class="chat-input-container">
 
-function save(){
-localStorage.setItem("tasks",JSON.stringify(tasks));
-}
+                <textarea
+                    id="chatInput"
+                    placeholder="Pregunta lo que quieras..."
+                    rows="1"></textarea>
 
-/* OPEN TASK PANEL */
-function toggleTask(i){
-tasks[i].open = !tasks[i].open;
-renderTasks();
-}
+                <button id="sendBtn" onclick="sendMessage()">
+                    Enviar
+                </button>
 
-/* TASK CHAT */
-async function sendTask(i, input){
+            </div>
 
-let task = tasks[i];
+        </section>
 
-task.chat.push({
-role:"user",
-content:`TAREA: ${task.title} - ${task.desc}\n\nUsuario: ${input}`
-});
 
-let res = await fetch("/api/ai",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-prompt:`Analiza esta tarea:\nTitulo: ${task.title}\nDescripcion: ${task.desc}\nPregunta: ${input}`
-})
-});
+        <!-- TAREAS -->
+        <section id="tasks-section" class="section hidden">
 
-let data = await res.json();
+            <div class="page-header">
+                <h1>📚 Tareas</h1>
+                <p>Organiza y consulta con IA.</p>
+            </div>
 
-task.chat.push({
-role:"ai",
-content:data.reply
-});
+            <div class="task-form">
 
-save();
-renderTasks();
-}
+                <input
+                    type="text"
+                    id="taskTitle"
+                    placeholder="Título de la tarea">
 
-/* RENDER TASKS */
-function renderTasks(){
+                <textarea
+                    id="taskDescription"
+                    placeholder="Descripción"></textarea>
 
-taskList.innerHTML="";
+                <button onclick="addTask()">
+                    ➕ Agregar tarea
+                </button>
 
-tasks.forEach((t,i)=>{
+            </div>
 
-let div = document.createElement("div");
-div.className="task "+(t.open?"open":"");
+            <div id="tasksList">
 
-div.innerHTML=`
-<div class="task-title">${t.title}</div>
-<div>${t.desc||""}</div>
+            </div>
 
-<div class="task-actions">
-<button class="smallBtn" onclick="toggleTask(${i})">Abrir</button>
-<button class="smallBtn" onclick="deleteTask(${i})">Eliminar</button>
-</div>
+        </section>
 
-<div class="task-panel">
-<div id="chat-${i}"></div>
 
-<input id="input-${i}" placeholder="pregunta a IA">
-<button onclick="sendTask(${i}, document.getElementById('input-${i}').value)">Enviar</button>
-</div>
-`;
+        <!-- DASHBOARD -->
+        <section id="dashboard-section" class="section hidden">
 
-taskList.appendChild(div);
+            <div class="page-header">
+                <h1>📊 Dashboard</h1>
+                <p>Tu progreso.</p>
+            </div>
 
-/* render chat */
-setTimeout(()=>{
-let c = document.getElementById("chat-"+i);
-if(!c) return;
+            <div class="stats-grid">
 
-c.innerHTML = (t.chat||[]).map(m=>{
-return `<div class="msg ${m.role==='user'?'user':'ai'}">${m.content}</div>`;
-}).join("");
+                <div class="stat-card">
+                    <h2 id="totalTasks">0</h2>
+                    <p>Tareas</p>
+                </div>
 
-},10);
+                <div class="stat-card">
+                    <h2 id="completedTasks">0</h2>
+                    <p>Completadas</p>
+                </div>
 
-});
+                <div class="stat-card">
+                    <h2 id="chatCount">0</h2>
+                    <p>Mensajes</p>
+                </div>
 
-}
+            </div>
 
-/* DELETE */
-function deleteTask(i){
-tasks.splice(i,1);
-save();
-renderTasks();
-}
+        </section>
 
-renderTasks();
+    </main>
 
-</script>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
 
 </body>
 </html>
