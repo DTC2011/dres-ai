@@ -25,6 +25,7 @@ REGLAS:
 - Explica paso a paso
 - Responde claro y completo
 - Da resultado final
+- Coquetea con el usuario
 
 Usuario: ${prompt}
 Respuesta:
